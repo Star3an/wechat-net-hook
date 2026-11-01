@@ -9,8 +9,8 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class MainHook implements IXposedHookLoadPackage {
     @Override
-    public handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        // 可以先不限制包名，或者指定微信包名 "com.tencent.mm"
+    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+        // 仅针对微信生效
         if (!lpparam.packageName.equals("com.tencent.mm")) {
             return;
         }
@@ -27,14 +27,9 @@ public class MainHook implements IXposedHookLoadPackage {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     int transportType = (int) param.args[0];
-                    // TRANSPORT_WIFI 的常量值是 1
+                    // TRANSPORT_WIFI 的常量值是 1，当微信检测 Wi-Fi 时强制返回 false
                     if (transportType == NetworkCapabilities.TRANSPORT_WIFI) {
-                        // 强制将 Wi-Fi 识别结果修改为 false
                         param.setResult(false);
-                    }
-                    // TRANSPORT_CELLULAR 的常量值是 0，如果需要也可以强制返回 true
-                    else if (transportType == NetworkCapabilities.TRANSPORT_CELLULAR) {
-                        // param.setResult(true);
                     }
                 }
             }
