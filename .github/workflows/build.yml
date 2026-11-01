@@ -32,6 +32,9 @@ jobs:
         yes | sdkmanager --licenses || true
         sdkmanager "platforms;android-33" "build-tools;33.0.2"
 
+    - name: Create local.properties
+      run: echo "sdk.dir=$HOME/android-sdk" > local.properties
+
     - name: Download and Setup Gradle
       run: |
         wget https://services.gradle.org/distributions/gradle-7.6-bin.zip
