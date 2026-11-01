@@ -1,8 +1,6 @@
 package com.example.wechatmobilernetwork;
 
 import android.net.NetworkCapabilities;
-import android.os.Build;
-
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
@@ -10,36 +8,36 @@ import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class MainHook implements IXposedHookLoadPackage {
-    private static final String WECHAT_PACKAGE_NAME = "com.tencent.mm";
-
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        if (!lpparam.packageName.equals(WECHAT_PACKAGE_NAME)) {
+    public handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+        // 可以先不限制包名，或者指定微信包名 "com.tencent.mm"
+        if (!lpparam.packageName.equals("com.tencent.mm")) {
             return;
         }
-        XposedBridge.log("LSPosed: 成功加载微信网络状态修改模块");
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            try {
-                XposedHelpers.findAndHookMethod(
-                    NetworkCapabilities.class,
-                    "hasTransport",
-                    int.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                            int transportType = (int) param.args[0];
-                            if (transportType == NetworkCapabilities.TRANSPORT_CELLULAR) {
-                                param.setResult(true);
-                            } else if (transportType == NetworkCapabilities.TRANSPORT_WIFI) {
-                                param.setResult(false);
-                            }
-                        }
+        XposedBridge.log("WeChatMobileNetwork: Successfully hooked WeChat!");
+
+        // Hook NetworkCapabilities 的 hasTransport 方法
+        XposedHelpers.findAndHookMethod(
+            "android.net.NetworkCapabilities",
+            lpparam.classLoader,
+            "hasTransport",
+            int.class,
+            new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    int transportType = (int) param.args[0];
+                    // TRANSPORT_WIFI 的常量值是 1
+                    if (transportType == NetworkCapabilities.TRANSPORT_WIFI) {
+                        // 强制将 Wi-Fi 识别结果修改为 false
+                        param.setResult(false);
                     }
-                );
-            } catch (Throwable e) {
-                XposedBridge.log("LSPosed Error hook hasTransport: " + e.getMessage());
+                    // TRANSPORT_CELLULAR 的常量值是 0，如果需要也可以强制返回 true
+                    else if (transportType == NetworkCapabilities.TRANSPORT_CELLULAR) {
+                        // param.setResult(true);
+                    }
+                }
             }
-        }
+        );
     }
 }
