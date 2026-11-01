@@ -15,6 +15,14 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Install SDK Platforms and Build Tools
+      run: |
+        yes | sdkmanager --licenses || true
+        sdkmanager "platforms;android-33" "build-tools;33.0.2"
+
     - name: Download and Setup Gradle
       run: |
         wget https://services.gradle.org/distributions/gradle-7.6-bin.zip
